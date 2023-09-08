@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,9 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // 加入通道组
-//        System.out.println(JSON.parse(ctx.channel().toString()));
+//        String uri = ctx.channel().attr(AttributeKey.valueOf("uri")).get().toString();
+        String clientId = ctx.channel().id().toString();
+        SendHandler.CHANNEL_MAP.put(clientId, ctx.channel());
         SendHandler.addChannel(ctx.channel());
         ctx.fireChannelActive();
         logger.info("建立连接: " + ctx.channel().remoteAddress());
@@ -65,6 +68,7 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        SendHandler.CHANNEL_MAP.remove(ctx.channel().id().toString());
         logger.info("断开连接：" + ctx.channel().remoteAddress());
         SendHandler.removeChannel(ctx.channel());
         super.channelInactive(ctx);
@@ -83,7 +87,7 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
             TextWebSocketFrame textFrame = (TextWebSocketFrame) msg;
             String text = textFrame.text();
 
-            if (text.contains("heartbeat")){
+            if (text.contains("heartbeat")) {
                 logger.info("接收到客户端心跳消息：" + text + ",ip:" + ctx.channel().remoteAddress());
                 SendHandler.sendServerMessage(ctx, "收到心跳");
             }

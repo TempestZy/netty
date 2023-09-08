@@ -21,17 +21,17 @@ public class SendHandler {
     /**
      * 存储所有连接的客户端通道
      */
-    private static final ChannelGroup CHANNELS = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    public static final ChannelGroup CHANNELS = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     /**
      * 存储分组信息和成员列表
      */
-    private static final Map<String, ChannelGroup> GROUP_MAP = new HashMap<>();
+    public static Map<String, ChannelGroup> GROUP_MAP = new HashMap<>();
 
     /**
      * 存储客户端标识和通道的映射
      */
-    private static final Map<String, Channel> CHANNEL_MAP = new HashMap<>();
+    public static Map<String, Channel> CHANNEL_MAP = new HashMap<>();
 
     /**
      * 添加客户端连接到通道组
@@ -103,9 +103,23 @@ public class SendHandler {
         }
     }
 
+    /**
+     * 向客户端发送消息
+     *
+     * @param ctx
+     * @param message
+     */
     public static void sendServerMessage(ChannelHandlerContext ctx, String message) {
-        // 直接使用通道的 writeAndFlush 方法向客户端发送消息
         ctx.channel().writeAndFlush(new TextWebSocketFrame(message));
+    }
+
+    /**
+     * 广播推送消息
+     *
+     * @param message 消息
+     */
+    public static void broadcastMessage(String message) {
+        CHANNELS.writeAndFlush(message);
     }
 
 }
