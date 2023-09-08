@@ -1,8 +1,10 @@
 package com.test.testnetty.handler;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
 import java.util.HashMap;
@@ -11,7 +13,7 @@ import java.util.Map;
 /**
  * SendHandler
  *
- * @author zhaoy
+ * @author tempest
  * @date 2023-09-08 10:56:05
  */
 public class SendHandler {
@@ -100,4 +102,10 @@ public class SendHandler {
             group.writeAndFlush(message);
         }
     }
+
+    public static void sendServerMessage(ChannelHandlerContext ctx, String message) {
+        // 直接使用通道的 writeAndFlush 方法向客户端发送消息
+        ctx.channel().writeAndFlush(new TextWebSocketFrame(message));
+    }
+
 }

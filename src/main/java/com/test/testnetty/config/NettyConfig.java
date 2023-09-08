@@ -15,15 +15,18 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * netty配置
  *
- * @author zhaoy
+ * @author tempest
  * @date 2023-09-07 15:21:11
  */
 
@@ -75,8 +78,10 @@ public class NettyConfig {
                                 .addLast(new ChunkedWriteHandler())
                                 // 解码成FullHttpRequest
                                 .addLast(new HttpObjectAggregator(1024 * 10))
+                                // 心跳检测机制 读 写 读写
+                                .addLast(new IdleStateHandler(3, 4, 5, TimeUnit.MINUTES))
                                 // 添加WebSocket解编码
-                                .addLast(new WebSocketServerProtocolHandler("/websocket"))
+                                .addLast(new WebSocketServerProtocolHandler("/"))
                                 // 自定义 handler，处理业务逻辑
                                 .addLast(new MyWebSocketHandler());
                     }

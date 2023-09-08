@@ -1,16 +1,16 @@
 package com.test.testnetty.handler;
 
-import com.alibaba.fastjson2.JSON;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * websocket处理
  *
- * @author zhaoy
+ * @author tempest
  * @date 2023-09-07 15:22:34
  */
 public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
@@ -82,7 +82,12 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof TextWebSocketFrame) {
             TextWebSocketFrame textFrame = (TextWebSocketFrame) msg;
             String text = textFrame.text();
-            logger.info("接收到客户端消息：" + text);
+
+            if (text.contains("heartbeat")){
+                logger.info("接收到客户端心跳消息：" + text + ",ip:" + ctx.channel().remoteAddress());
+                SendHandler.sendServerMessage(ctx, "收到心跳");
+            }
+
             // 处理接收到的消息
             // 这里可以将消息广播给所有连接的客户端等等
         }
@@ -96,7 +101,7 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        logger.info("读取数据完成调用：" + ctx.channel().remoteAddress());
+//        logger.info("读取数据完成：" + ctx.channel().remoteAddress());
         super.channelReadComplete(ctx);
     }
 
@@ -109,7 +114,27 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        logger.info("用户自定义事件：" + ctx.channel().remoteAddress());
+//        logger.info("用户自定义事件：" + ctx.channel().remoteAddress());
+
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent) evt;
+            String eventType = null;
+            switch (event.state()) {
+                case READER_IDLE:
+                    eventType = "读空闲";
+                    break;
+                case WRITER_IDLE:
+                    eventType = "写空闲";
+                    break;
+                case ALL_IDLE:
+                    eventType = "读写空闲";
+                    break;
+                default:
+                    break;
+            }
+            logger.info(ctx.channel().remoteAddress() + " 发生了超时事件：" + eventType);
+        }
+
         super.userEventTriggered(ctx, evt);
     }
 
