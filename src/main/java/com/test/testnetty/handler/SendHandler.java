@@ -6,6 +6,8 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +19,11 @@ import java.util.Map;
  * @date 2023-09-08 10:56:05
  */
 public class SendHandler {
+
+    /**
+     * 日志
+     */
+    private static final Logger logger = LoggerFactory.getLogger(SendHandler.class);
 
     /**
      * 存储所有连接的客户端通道
@@ -119,7 +126,7 @@ public class SendHandler {
      * @param message 消息
      */
     public static void broadcastMessage(String message) {
-        CHANNELS.writeAndFlush(message);
+        CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
     }
 
 }

@@ -36,7 +36,7 @@ public class NettyConfig {
     private static final Logger logger = LoggerFactory.getLogger(NettyConfig.class);
 
     /**
-     * 创建主线程池组，处理客户端的连接
+     * 创建线程池组，处理客户端的连接
      *
      * @return 异步事件循环
      */
@@ -46,7 +46,7 @@ public class NettyConfig {
     }
 
     /**
-     * 创建从线程池组，处理客户端的读写
+     * 创建线程池组，处理客户端的读写
      *
      * @return 异步事件循环
      */
@@ -78,10 +78,10 @@ public class NettyConfig {
                                 .addLast(new ChunkedWriteHandler())
                                 // 解码成FullHttpRequest
                                 .addLast(new HttpObjectAggregator(1024 * 10))
-                                // 心跳检测机制 读 写 读写
+                                // 心跳检测机制 读，写，读写
                                 .addLast(new IdleStateHandler(3, 4, 5, TimeUnit.MINUTES))
                                 // 添加WebSocket解编码
-                                .addLast(new WebSocketServerProtocolHandler("/"))
+                                .addLast(new WebSocketServerProtocolHandler("/websocket"))
                                 // 自定义 handler，处理业务逻辑
                                 .addLast(new MyWebSocketHandler());
                     }

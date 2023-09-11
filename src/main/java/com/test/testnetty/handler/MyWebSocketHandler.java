@@ -4,7 +4,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +51,8 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // 加入通道组
-//        String uri = ctx.channel().attr(AttributeKey.valueOf("uri")).get().toString();
         String clientId = ctx.channel().id().toString();
+        SendHandler.CHANNELS.add(ctx.channel());
         SendHandler.CHANNEL_MAP.put(clientId, ctx.channel());
         SendHandler.addChannel(ctx.channel());
         ctx.fireChannelActive();
@@ -69,6 +68,7 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         SendHandler.CHANNEL_MAP.remove(ctx.channel().id().toString());
+        SendHandler.CHANNELS.remove(ctx.channel());
         logger.info("断开连接：" + ctx.channel().remoteAddress());
         SendHandler.removeChannel(ctx.channel());
         super.channelInactive(ctx);
@@ -90,6 +90,11 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
             if (text.contains("heartbeat")) {
                 logger.info("接收到客户端心跳消息：" + text + ",ip:" + ctx.channel().remoteAddress());
                 SendHandler.sendServerMessage(ctx, "收到心跳");
+            } else if (text.contains("broadcast")) {
+                logger.info("接收到发送广播消息的通知：" + text);
+                SendHandler.broadcastMessage("这是一条广播消息:" + text);
+            } else {
+                SendHandler.sendServerMessage(ctx, "收到前端推送消息：" + text);
             }
 
             // 处理接收到的消息
