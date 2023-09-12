@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <form onsubmit="return false">
+        <textarea name="message" style="height: 300px;width: 300px"></textarea>
+        <input type="button" value="发送消息" onclick="send(this.form.message.value)">
+        <textarea id="responseText" style="height: 300px;width: 300px"></textarea>
+        <input type="button" value="清空内容"
+               onclick="document.getElementById('responseText').value=''">
+    </form>
+    <script>
+        var socket;
+        // 判断当前浏览器是否支持websocket编程
+        if (window.WebSocket) {
+            socket = new WebSocket("ws://192.168.2.49:18011/websocket");
+            // 相当于 channelRead0，可以接收服务器会送的消息，ev就是收到的消息
+            socket.onmessage = function(ev) {
+                var rt = document.getElementById("responseText");
+                var data = JSON.parse(ev.data)
+                if (data.code === '0') {
+                    console.log(data)
+                } else {
+                    rt.value = rt.value + "\n" + data.msg;
+                }
+    
+            }
+            // 相当于长连接开启
+            socket.onopen = function(ev) {
+                var rt = document.getElementById("responseText");
+                rt.value = "连接开启..."
+                var data = JSON.stringify({
+                    code: "1111",
+                    msg: "login"
+                })
+                socket.send(data)
+            }
+            // 感知长连接关闭
+            socket.onclose = function(ev) {
+                var rt = document.getElementById("responseText");
+                rt.value = rt.value + "\n" + "连接关闭了...";
+            }
+
+            // 心跳定时器，定期发送心跳消息
+            const heartbeatInterval = setInterval(() => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    var data = JSON.stringify({
+                        code: "0",
+                        msg: 'heartbeat:' + new Date().getTime(),
+                    })
+                    socket.send(data);
+                }
+            }, 60000); // 每60秒发送一次心跳消息
+        } else {
+            alert("当前浏览器不支持websocket编程");
+        }
+    
+        // 发送消息到服务器
+        function send(message) {
+            // 判断 socket 是否创建好
+            if (!window.WebSocket) {
+                return;
+            }
+            if (socket.readyState == WebSocket.OPEN) {
+                // 通过socket发送消息
+                socket.send(message);
+            } else {
+                alert("连接没有开启...");
+            }
+        }
+
+        function generateRandomAlphaNumericString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                result += characters.charAt(randomIndex);
+            }
+            return result;
+        }
+    </script>
+
+</body>
+</html>

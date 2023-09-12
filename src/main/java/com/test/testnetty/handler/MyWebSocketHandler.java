@@ -1,11 +1,17 @@
 package com.test.testnetty.handler;
 
+import com.alibaba.fastjson2.JSONObject;
+import com.test.testnetty.common.CommonConstant;
+import com.test.testnetty.entity.WebsocketMessage;
+import com.test.testnetty.utils.CommonUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 
 /**
  * websocket处理
@@ -13,7 +19,11 @@ import org.slf4j.LoggerFactory;
  * @author tempest
  * @date 2023-09-07 15:22:34
  */
+
 public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 日志
@@ -53,10 +63,9 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
         // 加入通道组
         String clientId = ctx.channel().id().toString();
         SendHandler.CHANNELS.add(ctx.channel());
-        SendHandler.CHANNEL_MAP.put(clientId, ctx.channel());
         SendHandler.addChannel(ctx.channel());
         ctx.fireChannelActive();
-        logger.info("建立连接: " + ctx.channel().remoteAddress());
+        logger.info("建立连接: " + ctx.channel().remoteAddress() + ";连接id:" + clientId + ";连接名称：" + ctx.name());
     }
 
     /**
@@ -86,15 +95,23 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof TextWebSocketFrame) {
             TextWebSocketFrame textFrame = (TextWebSocketFrame) msg;
             String text = textFrame.text();
-
-            if (text.contains("heartbeat")) {
+            WebsocketMessage websocketMessage = JSONObject.parseObject(text, WebsocketMessage.class);
+            if (websocketMessage.getMsg().contains(CommonConstant.HEARTBEAT)) {
                 logger.info("接收到客户端心跳消息：" + text + ",ip:" + ctx.channel().remoteAddress());
-                SendHandler.sendServerMessage(ctx, "收到心跳");
-            } else if (text.contains("broadcast")) {
+                SendHandler.sendServerMessage(ctx, CommonUtil.websocketMessage("0",
+                        CommonConstant.HEARTBEAT + ":收到心跳", null));
+            } else if (websocketMessage.getMsg().contains(CommonConstant.BROADCAST)) {
                 logger.info("接收到发送广播消息的通知：" + text);
-                SendHandler.broadcastMessage("这是一条广播消息:" + text);
+                SendHandler.broadcastMessage(CommonUtil.websocketMessage("0",
+                        "这是一条广播消息:" + websocketMessage.getMsg(), null));
+            } else if (websocketMessage.getMsg().equals(CommonConstant.LOGIN)) {
+                // 登录绑定
+                SendHandler.CHANNEL_MAP.put(websocketMessage.getCode(), ctx.channel());
+                SendHandler.sendServerMessage(ctx, CommonUtil.websocketMessage("0",
+                        "你好客户端，成功登录", "0"));
             } else {
-                SendHandler.sendServerMessage(ctx, "收到前端推送消息：" + text);
+                SendHandler.sendServerMessage(ctx, CommonUtil.websocketMessage("0",
+                        "收到客户端消息", "0"));
             }
 
             // 处理接收到的消息
@@ -110,7 +127,6 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-//        logger.info("读取数据完成：" + ctx.channel().remoteAddress());
         super.channelReadComplete(ctx);
     }
 
@@ -123,8 +139,6 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-//        logger.info("用户自定义事件：" + ctx.channel().remoteAddress());
-
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             String eventType = null;

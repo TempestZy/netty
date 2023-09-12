@@ -6,5 +6,20 @@ package com.test.testnetty.common;
  * @author tempest
  * @date 2023-09-11 16:54:40
  */
-public interface CommonConstant {
+public class CommonConstant {
+
+    /**
+     * 心跳
+     */
+    public static final String HEARTBEAT = "heartbeat";
+
+    /**
+     * 广播
+     */
+    public static final String BROADCAST = "broadcast";
+
+    /**
+     * 登录
+     */
+    public static final String LOGIN = "login";
 }
