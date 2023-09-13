@@ -8,10 +8,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 
 /**
  * websocket处理
@@ -19,11 +19,13 @@ import org.springframework.data.redis.core.RedisTemplate;
  * @author tempest
  * @date 2023-09-07 15:22:34
  */
-
+@Component
 public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    /**
+     *
+     */
+    public static final AttributeKey<String> ACCOUNT_ID_KEY = AttributeKey.valueOf("account_id");
 
     /**
      * 日志
@@ -62,7 +64,6 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // 加入通道组
         String clientId = ctx.channel().id().toString();
-        SendHandler.CHANNELS.add(ctx.channel());
         SendHandler.addChannel(ctx.channel());
         ctx.fireChannelActive();
         logger.info("建立连接: " + ctx.channel().remoteAddress() + ";连接id:" + clientId + ";连接名称：" + ctx.name());
@@ -76,8 +77,9 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        SendHandler.CHANNEL_MAP.remove(ctx.channel().id().toString());
-        SendHandler.CHANNELS.remove(ctx.channel());
+        logger.info("账号退出：" + ctx.channel().attr(ACCOUNT_ID_KEY).get());
+        SendHandler.CHANNEL_MAP.remove(ctx.channel().attr(ACCOUNT_ID_KEY).get());
+        SendHandler.removeChannel(ctx.channel());
         logger.info("断开连接：" + ctx.channel().remoteAddress());
         SendHandler.removeChannel(ctx.channel());
         super.channelInactive(ctx);
@@ -107,15 +109,19 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
             } else if (websocketMessage.getMsg().equals(CommonConstant.LOGIN)) {
                 // 登录绑定
                 SendHandler.CHANNEL_MAP.put(websocketMessage.getCode(), ctx.channel());
+                SendHandler.joinGroup("1", ctx.channel());
                 SendHandler.sendServerMessage(ctx, CommonUtil.websocketMessage("0",
                         "你好客户端，成功登录", "0"));
+                ctx.channel().attr(ACCOUNT_ID_KEY).set(websocketMessage.getCode());
             } else {
-                SendHandler.sendServerMessage(ctx, CommonUtil.websocketMessage("0",
-                        "收到客户端消息", "0"));
+//                SendHandler.sendToClient(websocketMessage.getToCode(),
+//                        CommonUtil.websocketMessage(websocketMessage.getCode(),
+//                                websocketMessage.getCode() + ":" + websocketMessage.getMsg(),
+//                                websocketMessage.getToCode()));
+                SendHandler.sendToGroup("1", CommonUtil.websocketMessage(websocketMessage.getCode(),
+                                websocketMessage.getCode() + ":" + websocketMessage.getMsg(),
+                                websocketMessage.getToCode()));
             }
-
-            // 处理接收到的消息
-            // 这里可以将消息广播给所有连接的客户端等等
         }
     }
 

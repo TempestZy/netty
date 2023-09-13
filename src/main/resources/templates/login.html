@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>模拟登录</title>
+</head>
+<body>
+<h1>模拟登录</h1>
+<form id="loginForm">
+    <label for="username">用户名:</label>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="password">密码:</label>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <button type="button" onclick="simulateLogin()">登录</button>
+</form>
+
+<script>
+    function simulateLogin() {
+        // 获取用户名和密码
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        window.location.href = "test.html?username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password);
+
+    }
+</script>
+</script>
+</body>
+</html>

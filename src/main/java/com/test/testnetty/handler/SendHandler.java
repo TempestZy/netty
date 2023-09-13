@@ -91,9 +91,10 @@ public class SendHandler {
      * @param message  消息
      */
     public static void sendToClient(String clientId, String message) {
+        logger.info("用户id:" + clientId + "发送客户端：" + message);
         Channel channel = CHANNEL_MAP.get(clientId);
         if (channel != null) {
-            channel.writeAndFlush(message);
+            channel.writeAndFlush(new TextWebSocketFrame(message));
         }
     }
 
@@ -104,9 +105,10 @@ public class SendHandler {
      * @param message 消息
      */
     public static void sendToGroup(String groupId, String message) {
+        logger.info("组id:" + groupId + "分组消息：" + message);
         ChannelGroup group = GROUP_MAP.get(groupId);
         if (group != null) {
-            group.writeAndFlush(message);
+            group.writeAndFlush(new TextWebSocketFrame(message));
         }
     }
 
@@ -117,6 +119,7 @@ public class SendHandler {
      * @param message
      */
     public static void sendServerMessage(ChannelHandlerContext ctx, String message) {
+        logger.info("向客户端发送消息：" + message);
         ctx.channel().writeAndFlush(new TextWebSocketFrame(message));
     }
 
@@ -126,6 +129,7 @@ public class SendHandler {
      * @param message 消息
      */
     public static void broadcastMessage(String message) {
+        logger.info("发送广播消息：" + message);
         CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
     }
 

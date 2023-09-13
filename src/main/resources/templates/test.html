@@ -3,26 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        textarea[name="message"] {
+            height: 300px;
+            width: 300px;
+            resize: none; /* 防止文本框大小可调整 */
+        }
+
+        #responseText {
+            height: 300px;
+            width: 300px;
+            resize: none;
+        }
+
+        input[type="button"] {
+            width: 100px;
+        }
+
+        /* 设置上面的input为不可输入 */
+        /*input[type="button"][value="发送消息"] {*/
+        /*    pointer-events: none;*/
+        /*}*/
+    </style>
 </head>
 <body>
     <form onsubmit="return false">
-        <textarea name="message" style="height: 300px;width: 300px"></textarea>
+        <textarea name="message"></textarea>
         <input type="button" value="发送消息" onclick="send(this.form.message.value)">
-        <textarea id="responseText" style="height: 300px;width: 300px"></textarea>
+        <textarea id="responseText" readonly="readonly"></textarea>
         <input type="button" value="清空内容"
                onclick="document.getElementById('responseText').value=''">
     </form>
     <script>
+
+        // 获取 URL 参数
+        function getUrlParameter(name) {
+            name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // 获取用户名和密码参数
+        var username = getUrlParameter('username');
+
+        if (username === '' || username === null){
+            alert("请登录")
+        }
+
         var socket;
         // 判断当前浏览器是否支持websocket编程
         if (window.WebSocket) {
             socket = new WebSocket("ws://192.168.2.49:18011/websocket");
             // 相当于 channelRead0，可以接收服务器会送的消息，ev就是收到的消息
             socket.onmessage = function(ev) {
-                var rt = document.getElementById("responseText");
-                var data = JSON.parse(ev.data)
+                let rt = document.getElementById("responseText");
+                let data = JSON.parse(ev.data);
+                console.log(data)
                 if (data.code === '0') {
-                    console.log(data)
                 } else {
                     rt.value = rt.value + "\n" + data.msg;
                 }
@@ -30,17 +74,17 @@
             }
             // 相当于长连接开启
             socket.onopen = function(ev) {
-                var rt = document.getElementById("responseText");
+                let rt = document.getElementById("responseText");
                 rt.value = "连接开启..."
-                var data = JSON.stringify({
-                    code: "1111",
+                let data = JSON.stringify({
+                    code: username,
                     msg: "login"
-                })
+                });
                 socket.send(data)
             }
             // 感知长连接关闭
             socket.onclose = function(ev) {
-                var rt = document.getElementById("responseText");
+                let rt = document.getElementById("responseText");
                 rt.value = rt.value + "\n" + "连接关闭了...";
             }
 
@@ -53,7 +97,7 @@
                     })
                     socket.send(data);
                 }
-            }, 60000); // 每60秒发送一次心跳消息
+            }, 120000); // 每60秒发送一次心跳消息
         } else {
             alert("当前浏览器不支持websocket编程");
         }
@@ -64,23 +108,19 @@
             if (!window.WebSocket) {
                 return;
             }
-            if (socket.readyState == WebSocket.OPEN) {
+            if (socket.readyState === WebSocket.OPEN) {
                 // 通过socket发送消息
-                socket.send(message);
+                var data = JSON.stringify({
+                    code: username,
+                    msg: message,
+                    toCode: "admin2"
+                })
+                socket.send(data);
             } else {
                 alert("连接没有开启...");
             }
         }
 
-        function generateRandomAlphaNumericString(length) {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                const randomIndex = Math.floor(Math.random() * characters.length);
-                result += characters.charAt(randomIndex);
-            }
-            return result;
-        }
     </script>
 
 </body>
