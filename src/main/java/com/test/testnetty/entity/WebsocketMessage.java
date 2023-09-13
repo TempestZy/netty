@@ -29,4 +29,9 @@ public class WebsocketMessage implements Serializable {
      * 接收客户端编号
      */
     private String toCode;
+
+    /**
+     * 组id
+     */
+    private String groupId;
 }

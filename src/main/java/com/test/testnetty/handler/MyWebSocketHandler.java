@@ -9,6 +9,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.AttributeKey;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -99,10 +100,12 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
             String text = textFrame.text();
             WebsocketMessage websocketMessage = JSONObject.parseObject(text, WebsocketMessage.class);
             if (websocketMessage.getMsg().contains(CommonConstant.HEARTBEAT)) {
+                // 心跳
                 logger.info("接收到客户端心跳消息：" + text + ",ip:" + ctx.channel().remoteAddress());
                 SendHandler.sendServerMessage(ctx, CommonUtil.websocketMessage("0",
                         CommonConstant.HEARTBEAT + ":收到心跳", null));
             } else if (websocketMessage.getMsg().contains(CommonConstant.BROADCAST)) {
+                // 广播
                 logger.info("接收到发送广播消息的通知：" + text);
                 SendHandler.broadcastMessage(CommonUtil.websocketMessage("0",
                         "这是一条广播消息:" + websocketMessage.getMsg(), null));
@@ -113,14 +116,19 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
                 SendHandler.sendServerMessage(ctx, CommonUtil.websocketMessage("0",
                         "你好客户端，成功登录", "0"));
                 ctx.channel().attr(ACCOUNT_ID_KEY).set(websocketMessage.getCode());
-            } else {
-//                SendHandler.sendToClient(websocketMessage.getToCode(),
-//                        CommonUtil.websocketMessage(websocketMessage.getCode(),
-//                                websocketMessage.getCode() + ":" + websocketMessage.getMsg(),
-//                                websocketMessage.getToCode()));
-                SendHandler.sendToGroup("1", CommonUtil.websocketMessage(websocketMessage.getCode(),
+            } else if (StringUtils.isNotBlank(websocketMessage.getGroupId())) {
+                // 分组发送
+                SendHandler.sendToGroup(websocketMessage.getGroupId(),
+                        CommonUtil.websocketMessage(websocketMessage.getCode(),
                                 websocketMessage.getCode() + ":" + websocketMessage.getMsg(),
                                 websocketMessage.getToCode()));
+            } else if (StringUtils.isNotBlank(websocketMessage.getToCode())) {
+                // 一对一发送
+                SendHandler.sendToGroup("1", CommonUtil.websocketMessage(websocketMessage.getCode(),
+                        websocketMessage.getCode() + ":" + websocketMessage.getMsg(),
+                        websocketMessage.getToCode()));
+            } else {
+
             }
         }
     }
