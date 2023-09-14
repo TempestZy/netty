@@ -196,9 +196,8 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("netty异常：" + cause.getMessage());
+        logger.info("netty异常：" + JSONObject.toJSONString(cause));
         // 处理异常
-//        cause.printStackTrace();
         ctx.close();
     }
 }
