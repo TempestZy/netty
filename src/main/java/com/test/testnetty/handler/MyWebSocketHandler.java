@@ -82,7 +82,6 @@ public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
         SendHandler.CHANNEL_MAP.remove(ctx.channel().attr(ACCOUNT_ID_KEY).get());
         SendHandler.removeChannel(ctx.channel());
         logger.info("断开连接：" + ctx.channel().remoteAddress());
-        SendHandler.removeChannel(ctx.channel());
         super.channelInactive(ctx);
     }
 

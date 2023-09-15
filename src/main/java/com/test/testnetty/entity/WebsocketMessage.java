@@ -36,4 +36,19 @@ public class WebsocketMessage implements Serializable {
      * 组id
      */
     private String groupId;
+
+    public WebsocketMessage(String code) {
+        this.code = code;
+    }
+
+    public WebsocketMessage(String code, String msg) {
+        this.code = code;
+        this.msg = msg;
+    }
+
+    public WebsocketMessage(String code, String msg, String toCode) {
+        this.code = code;
+        this.msg = msg;
+        this.toCode = toCode;
+    }
 }

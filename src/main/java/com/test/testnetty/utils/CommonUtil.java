@@ -12,11 +12,11 @@ import com.test.testnetty.entity.WebsocketMessage;
 public class CommonUtil {
 
     public static String websocketMessage(String code) {
-        return JSONObject.toJSONString(new WebsocketMessage(code, null, null, null));
+        return JSONObject.toJSONString(new WebsocketMessage(code));
     }
 
     public static String websocketMessage(String code, String msg) {
-        return JSONObject.toJSONString(new WebsocketMessage(code, msg, null, null));
+        return JSONObject.toJSONString(new WebsocketMessage(code, msg));
     }
     /**
      * 组装websocket信息
@@ -27,7 +27,7 @@ public class CommonUtil {
      * @return jsonString
      */
     public static String websocketMessage(String code, String msg, String toCode) {
-        return JSONObject.toJSONString(new WebsocketMessage(code, msg, toCode, null));
+        return JSONObject.toJSONString(new WebsocketMessage(code, msg, toCode));
     }
 
     public static String websocketMessage(String code, String msg, String toCode, String groupId) {
