@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class MyWebSocketHandler extends ChannelInboundHandlerAdapter {
 
     /**
-     *
+     * attribute
      */
     public static final AttributeKey<String> ACCOUNT_ID_KEY = AttributeKey.valueOf("account_id");
 
