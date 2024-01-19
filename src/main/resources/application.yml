@@ -8,3 +8,8 @@ spring:
     password:
     database: 5
     ssl: false
+
+rocketmq:
+  name-server: 8.140.23.7:19876
+  producer:
+    group: test_group
