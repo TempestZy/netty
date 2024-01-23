@@ -1,5 +1,7 @@
 package com.test.testnetty;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -14,6 +16,8 @@ import java.nio.file.*;
 @Service
 public class FileWatcherService {
 
+    private static final Logger logger = LoggerFactory.getLogger(FileWatcherService.class);
+
     private WatchService watchService;
 
     public void startWatching(String folderPath) throws IOException {
@@ -25,7 +29,7 @@ public class FileWatcherService {
             try {
                 processEvents();
             } catch (InterruptedException | IOException e) {
-                e.printStackTrace();
+                logger.error("开始监控异常", e);
             }
         });
         watchThread.setDaemon(true);
@@ -36,7 +40,7 @@ public class FileWatcherService {
         try {
             watchService.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("停止监控异常", e);
         }
     }
 
